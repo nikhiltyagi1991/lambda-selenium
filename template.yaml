@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  lambda-selenium
+
+  Sample SAM Template for lambda-selenium
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+
+  DeploymentPermission:
+    Type: "AWS::Lambda::LayerVersionPermission"
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref ChromiumLayer
+      Principal: '*'
+
+  DeploymentPermission:
+    Type: "AWS::Lambda::LayerVersionPermission"
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref PythonDepLayer
+      Principal: '*'
+
+  ChromiumLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: chromium-selenium-layer
+      Description: Headless Chromium and Selenium WebDriver
+      ContentUri: ./layers/selenium-binaries
+      CompatibleRuntimes:
+        - nodejs8.10
+        - python3.8
+        - python2.7
+        - go1.x
+        - java8
+      LicenseInfo: 'MIT'
+      RetentionPolicy: Retain
+  
+  PythonDepLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: selenium-layer
+      Description: Selenium, Requests, Chromedriver-binary
+      ContentUri: ./layers/python-dependencies
+      CompatibleRuntimes:
+        - python3.7
+      LicenseInfo: 'MIT'
+      RetentionPolicy: Retain
+
+  LambdaSelenium:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      MemorySize: 764
+      Timeout: 300
+      Layers:
+        - !Ref ChromiumLayer
+        - !Ref PythonDepLayer
+      Environment:
+        Variables:
+          CLEAR_TMP: "true"
+          PATH: /var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/tmp/bin:/tmp/bin/lib
